@@ -15,8 +15,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Separate package so this build installs alongside the original app
+            applicationIdSuffix '.rebuild'
+            manifestPlaceholders = [appLabel: 'Meme GPT Rebuild']
+        }
         release {
             minifyEnabled false
+            manifestPlaceholders = [appLabel: 'Meme GPT            ']
         }
     }
 
