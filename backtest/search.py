@@ -74,6 +74,49 @@ def fmt(s):
             "avgLoss=%(avg_loss)6.2f exTop3=%(ex_top3)8.2f moons=%(moons)d" % s) if s["n"] else "n=0"
 
 
+def grid(space):
+    keys = list(space)
+    for vals in itertools.product(*(space[k] for k in keys)):
+        yield dict(zip(keys, vals))
+
+
+def best(S, base, space, min_n=25, top=8, label=""):
+    rows = []
+    for over in grid(space):
+        p = dict(base, **over)
+        tr = tune.summary(S.run(p, "train"))
+        if tr["n"] < min_n:
+            continue
+        rows.append((tr["pnl"], over, tr))
+    rows.sort(key=lambda r: -r[0])
+    print(f"\n== {label}: {len(rows)} settings with >= {min_n} train trades; top {top} by train P/L")
+    out = []
+    for pnl, over, tr in rows[:top]:
+        te = tune.summary(S.run(dict(base, **over), "test"))
+        print(json.dumps({k: v for k, v in over.items()}))
+        print("   train", fmt(tr)); print("   test ", fmt(te))
+        out.append((over, tr, te))
+    return out
+
+
+EXIT_SPACE = dict(
+    floor0=[0.675, 0.75, 0.8, 0.85, 0.9],
+    time_stop_min=[None, 30, 60, 120, 240, 720],
+    time_stop_x=[1.1, 1.3, 1.5],
+    horizon_bars=[24 * 360, 48 * 360],
+)
+ENTRY_SPACE = dict(
+    min_age=[1.0, 2.0, 5.0],
+    max_age=[25.0, 60.0],
+    min_usd_vol=[0.0, 50e3, 250e3, 1e6],
+    min_avg_trade=[0.0, 50.0, 150.0],
+    min_buy_share=[0.0, 0.52, 0.56],
+    min_momentum=[0.0, 10.0, 30.0],
+    max_momentum=[1e9, 100.0],
+    max_from_high=[1e9, 15.0],
+)
+
+
 if __name__ == "__main__":
     toks = tune.load()
     S = Searcher(toks)
@@ -82,3 +125,9 @@ if __name__ == "__main__":
     base = dict(tune.APP)
     for which in ("train", "test"):
         print("APP DEFAULTS", which, fmt(tune.summary(S.run(base, which))))
+    stage = sys.argv[1] if len(sys.argv) > 1 else "exits"
+    if stage == "exits":
+        best(S, base, EXIT_SPACE, label="exits (app entry filters)")
+    elif stage == "entries":
+        ex = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {}
+        best(S, dict(base, **ex), ENTRY_SPACE, label="entries with exits " + json.dumps(ex), top=12)

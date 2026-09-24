@@ -29,7 +29,7 @@ APP = dict(
 )
 
 
-def load(cache="cache"):
+def load(cache="cache2"):
     toks = []
     for f in sorted(glob.glob(os.path.join(cache, "*.npz"))):
         if f.endswith(".part.npz"):

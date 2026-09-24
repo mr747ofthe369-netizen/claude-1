@@ -1,5 +1,8 @@
 """Cache each listing's first 49h of Bybit spot trades as 10-second bars.
 
+The listing start is the first trade of the first 60s window with 20+ trades;
+earlier placeholder trades (common in the archive before mid-2024) are dropped.
+
 Output: cache/<SYMBOL>.npz with arrays over bars since the first trade:
   last, high, low           price (NaN where the bar has no trades)
   nbuy, nsell               trade counts
@@ -13,28 +16,32 @@ BASE = "https://public.bybit.com/spot/"
 BAR_MS = 10_000
 SPAN_MS = 49 * 3600 * 1000
 NBARS = SPAN_MS // BAR_MS
-os.makedirs("cache", exist_ok=True)
+START_TRADES = 20
+CACHE = os.environ.get("CACHE", "cache2")
+os.makedirs(CACHE, exist_ok=True)
 
 
 def fetch(sym, files):
-    out = f"cache/{sym}.npz"
+    out = f"{CACHE}/{sym}.npz"
     if os.path.exists(out):
         return sym, "cached"
     ts_l, px_l, q_l, buy_l = [], [], [], []
-    t0 = None
+    t0 = None      # real start: first trade of the first 60s window holding START_TRADES trades
     try:
-        for f in files[:2]:
+        for f in files[:3]:
             with urllib.request.urlopen(BASE + sym + "/" + f, timeout=180) as r:
                 rd = csv.reader(io.TextIOWrapper(gzip.GzipFile(fileobj=r), "utf-8"))
                 next(rd, None)
                 for row in rd:
                     ts = int(float(row[1]))
-                    if t0 is None:
-                        t0 = ts
-                    if ts - t0 >= SPAN_MS:
-                        break
                     ts_l.append(ts); px_l.append(float(row[2])); q_l.append(float(row[3]))
                     buy_l.append(row[4].lower() == "buy")
+                    if t0 is None:
+                        n = len(ts_l)
+                        if n >= START_TRADES and ts - ts_l[n - START_TRADES] <= 60_000:
+                            t0 = ts_l[n - START_TRADES]
+                    elif ts - t0 >= SPAN_MS:
+                        break
                 else:
                     continue
                 break
@@ -45,7 +52,9 @@ def fetch(sym, files):
     ts = np.array(ts_l, np.int64); px = np.array(px_l); q = np.array(q_l); buy = np.array(buy_l)
     order = np.argsort(ts, kind="stable")
     ts, px, q, buy = ts[order], px[order], q[order], buy[order]
-    t0 = int(ts[0]); p0 = float(px[0])
+    keep = ts >= t0
+    ts, px, q, buy = ts[keep], px[keep], q[keep], buy[keep]
+    p0 = float(px[0])
     b = ((ts - t0) // BAR_MS).astype(np.int64)
     ok = (b >= 0) & (b < NBARS)
     b, px, q, buy = b[ok], px[ok], q[ok], buy[ok]
@@ -59,7 +68,7 @@ def fetch(sym, files):
     nsell = np.bincount(b[~buy], minlength=NBARS).astype(np.int32)
     vbuy = np.bincount(b[buy], weights=usd[buy], minlength=NBARS)
     vsell = np.bincount(b[~buy], weights=usd[~buy], minlength=NBARS)
-    tmp = f"cache/{sym}.part.npz"
+    tmp = f"{CACHE}/{sym}.part.npz"
     np.savez_compressed(tmp, t0=t0, p0=p0, last=last, high=high, low=low, nbuy=nbuy, nsell=nsell, vbuy=vbuy, vsell=vsell)
     os.replace(tmp, out)
     return sym, "ok"
