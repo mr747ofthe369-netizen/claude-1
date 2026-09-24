@@ -47,3 +47,58 @@ python3 backtest.py 2024-09 2026-08
 ```
 
 Per-trade details are in `results.json`.
+
+---
+
+# Tuning study (Dec 2022 – Aug 2026, 544 listings)
+
+Tools: `fetch_bars.py` (cache first 49h as 10s bars, listing start = first
+60s window with 20+ trades), `tune.py` (fast replay), `study.py` (moonshot
+predictors), `search.py` (grid search: pick settings on listings before 2025,
+check them on 2025–26 listings they never saw).
+
+## How often do Bybit listings moon?
+
+From the price 5 minutes after trading opens, within 48h: 41 of 544 reached
+2x, 16 reached 3x, 7 reached 5x, 3 reached 10x. The typical listing ended 48h
+later at 0.81x.
+
+Early metrics vs reaching 3x (quintiles at 5 min; small counts, so treat as hints):
+
+- Buy share of USD volume ≥ 62%: 7% hit 3x vs 1% when < 47% (strongest signal)
+- Trading within 3% of the early high: 7% vs 1–3%
+- Quieter listings (< ~$290k traded in 5 min): 5–6% vs 1% for the busiest
+- Early momentum alone: no signal
+
+## Exits
+
+Tighter stops (0.9x first stop, time stop for non-movers) halve the average
+loss ($2.96 → $1.42) but cut the moonshots before they run: pre-2025 improves
+−$357 → −$167, while 2025–26 drops from +$82 to about −$100. The app's loose
+0.675x stop is what lets the rare runners survive, so it should stay.
+
+## Entries
+
+No filter combination was profitable before 2025; the best only lost less by
+trading less. The setting that held up best out of sample:
+
+**average trade ≥ $150 at entry, skip if already up > 100%, entry window 5–60 min**
+
+| | pre-2025 (train) | 2025–26 (test) |
+|---|---|---|
+| App defaults (DEX costs) | 183 trades, −$356.86 | 114 trades, +$82.27 |
+| App defaults (Bybit costs*) | 183 trades, −$310.76 | 114 trades, +$119.35 |
+| Filtered (DEX costs) | 32 trades, −$31.46 | 33 trades, +$30.81 |
+| Filtered (Bybit costs*) | 32 trades, −$22.54 | 33 trades, +$41.73 |
+
+\* 0.4% slippage/fee each way instead of the app's DEX 1.5% in / 2% out + $0.03.
+
+The filtered 2025–26 result still depends on one trade (HOODX +$46).
+
+## Conclusion
+
+Bybit spot listings are vetted, large-cap launches that mostly drift down;
+they are not the early meme-coin launches the strategy was built for. Early
+Bybit trade-flow metrics carry only weak signals, and the results swing with
+the market period. A fair test of the meme strategy needs DEX launch data
+(liquidity, unique buyers, holder counts) from the venues the app trades.
