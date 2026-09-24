@@ -102,3 +102,32 @@ they are not the early meme-coin launches the strategy was built for. Early
 Bybit trade-flow metrics carry only weak signals, and the results swing with
 the market period. A fair test of the meme strategy needs DEX launch data
 (liquidity, unique buyers, holder counts) from the venues the app trades.
+
+---
+
+# Rising-activity entry (`activity.py`)
+
+Idea: only enter when activity is building. There is no wallet data on Bybit,
+so wallet growth is approximated by trade-count growth and money flow by USD
+volume growth, comparing the last W minutes with the W minutes before.
+Grid: W 5/15/30 min, trade growth 0/20/50%, volume growth 20/50/100%, buy share,
+minimum window volume, momentum, distance from high, entry up to 6h. App exits.
+
+Best setting chosen on pre-2025 listings:
+
+**W = 15 min: trades up ≥ 20% and USD volume up ≥ 20% vs the previous 15 min,
+buy share ≥ 52% in the window, ≥ $20k traded in the window, price above the
+listing open; entry 30–60 min after listing** (30 min is the earliest a 15+15
+min comparison is possible).
+
+| | pre-2025 (train) | 2025–26 (test) |
+|---|---|---|
+| App defaults | 183 trades, −$356.86 | 114 trades, +$82.27 |
+| Rising activity (DEX costs) | 30 trades, −$13.26 | 30 trades, +$59.79 (win 43%, PF 2.68) |
+| Rising activity (Bybit costs) | 30 trades, −$4.46 | 30 trades, +$70.60 (win 43%, PF 3.24) |
+
+- Losses are smaller: median trade −13% / −5% vs −35% / −20% with the defaults.
+- Robustness: across the top 50 settings picked on pre-2025 data, the 2025–26
+  P/L had a median of +$36.72 (range −$1.30 to +$89.70).
+- Still not profitable before 2025, and 2025–26 relies on one runner
+  (MMT +$52.5); without the top 3 trades 2025–26 is −$10.38.
