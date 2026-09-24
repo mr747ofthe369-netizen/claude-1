@@ -40,7 +40,8 @@ def entry_bars(F, p):
           & (F["momentum"] <= p["max_momentum"]) & (F["usd_vol"] >= p["min_usd_vol"])
           & (F["buy_share"] >= p["min_buy_share"]) & (F["avg_trade"] >= p["min_avg_trade"])
           & (F["from_high"] <= p["max_from_high"])
-          & (F["recent_momentum"] >= p["min_recent_momentum"]))
+          & (F["recent_momentum"] >= p["min_recent_momentum"])
+          & (F["usd_vol"] <= p.get("max_usd_vol", 1e18)))
     return int(np.argmax(ok)) if ok.any() else None
 
 

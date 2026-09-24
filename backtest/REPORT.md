@@ -131,3 +131,38 @@ min comparison is possible).
   P/L had a median of +$36.72 (range −$1.30 to +$89.70).
 - Still not profitable before 2025, and 2025–26 relies on one runner
   (MMT +$52.5); without the top 3 trades 2025–26 is −$10.38.
+
+---
+
+# Runner-safe filters (`runners.py`, `runner_safe.py`)
+
+The rising-activity rule was too tight: it caught 6 of 16 runners (listings that
+reached ≥ 3x from their 5-minute price within 48h), because it waits 30 min and
+most runners move in the first minutes. The app's default entry caught 15/16,
+almost all at 5 min. So the search was redone with a different objective: keep
+the early entry, and only accept settings that still catch at least 6 of the 7
+pre-2025 runners; among those, pick the smallest pre-2025 loss.
+
+At the app's entry point, runners vs the rest (medians): buy share 0.64 vs 0.57
+(never below 0.51), USD traded so far $128k vs $416k, 2.5% vs 10% below the
+early high, last-5-min move +14% vs +2%.
+
+Best setting (app filters plus):
+
+**entry from 1 min (instead of 5), buy share of USD volume ≥ 58%, ≤ $500k
+traded so far, not more than 50% below the early high, not down more than 10%
+in the last 5 minutes**
+
+| | pre-2025 | 2025–26 (unseen) |
+|---|---|---|
+| App defaults | 183 trades, −$356.86, runners 6/7 | 114 trades, +$82.27, runners 9/9 |
+| Runner-safe | 109 trades, −$160.41, runners 6/7 | 79 trades, +$66.85, runners 8/9 |
+| Rising activity | 30 trades, −$13.26, runners 3/7 | 30 trades, +$59.79, runners 3/9 |
+
+- Cuts pre-2025 losses by more than half while keeping the same runners.
+- 2025–26 misses only TRUMP (+$9 under the app's exits); median trade −12%
+  vs −20% with the defaults.
+- Across the top 50 runner-safe settings, 2025–26 P/L: median +$47.18
+  (range +$5.27 to +$69.86).
+- A looser volume cap ($1M / $2M) keeps more trades but loses more:
+  pre-2025 −$213 / −$238, 2025–26 +$47 / +$43.
