@@ -1,0 +1,32 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.benknight.mwsl'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.memegpt.app.beta1'
+        minSdk 29
+        targetSdk 35
+        versionCode 300
+        versionName '3.0.0-beta3'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'net.i2p.crypto:eddsa:0.3.0'
+}
