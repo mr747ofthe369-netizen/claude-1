@@ -29,5 +29,19 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: memegpt-parameter-bridge-dex
-          path: bridge-dex/classes.dex
+          path: bridge-dex/classes*.dex
+          retention-days: 7
+      - name: Collect Android signing tools
+        run: |
+          mkdir -p android-tools
+          BT="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          echo "Using $BT"
+          cp "$BT/lib/apksigner.jar" android-tools/
+          cp "$BT/zipalign" android-tools/
+          chmod +x android-tools/zipalign
+          ls -lh android-tools
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-signing-tools
+          path: android-tools/
           retention-days: 7
