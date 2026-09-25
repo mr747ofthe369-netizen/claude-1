@@ -38,6 +38,7 @@ jobs:
           echo "Using $BT"
           cp "$BT/lib/apksigner.jar" android-tools/
           cp "$BT/zipalign" android-tools/
+          find "$BT" -name 'libc++.so*' -type f -exec cp {} android-tools/ \; || true
           chmod +x android-tools/zipalign
           ls -lh android-tools
       - uses: actions/upload-artifact@v4
