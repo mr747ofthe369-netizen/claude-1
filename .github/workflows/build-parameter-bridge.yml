@@ -1,0 +1,32 @@
+name: Build parameter bridge dex
+
+on:
+  push:
+    branches:
+      - meme-gpt-parameter-loader
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build bridge APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :bridge:assembleDebug --stacktrace
+      - name: Extract replacement dex
+        run: |
+          mkdir -p bridge-dex
+          unzip -j bridge/build/outputs/apk/debug/bridge-debug.apk classes.dex -d bridge-dex
+          sha256sum bridge-dex/classes.dex
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memegpt-parameter-bridge-dex
+          path: bridge-dex/classes.dex
+          retention-days: 7
