@@ -23,8 +23,9 @@ jobs:
       - name: Extract replacement dex
         run: |
           mkdir -p bridge-dex
-          unzip -j bridge/build/outputs/apk/debug/bridge-debug.apk classes.dex -d bridge-dex
-          sha256sum bridge-dex/classes.dex
+          unzip -l bridge/build/outputs/apk/debug/bridge-debug.apk | grep 'classes.*dex' || true
+          unzip -j bridge/build/outputs/apk/debug/bridge-debug.apk 'classes*.dex' -d bridge-dex
+          sha256sum bridge-dex/classes*.dex
       - uses: actions/upload-artifact@v4
         with:
           name: memegpt-parameter-bridge-dex
